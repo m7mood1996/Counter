@@ -25,9 +25,10 @@ public:
 
     size_t operator[](T& obj) const;
     T& most_common() const;
-    void add_from_stream(std::istream &istream);
+    void add_from_stream(std::istream *istream);
     void print_to_stream(std::ostream& ostream) const;
     void print_most_common(std::ostream &ostream) const;
+    bool is_empty();
 private:
     // template vector of pairs: the first describe the object the second describe the freq
     std::vector<std::pair<T,size_t> > counter_vector;
@@ -93,10 +94,12 @@ T &Counter<T>::most_common() const {
 }
 
 template<typename T>
-void Counter<T>::add_from_stream( std::istream &istream) {
+void Counter<T>::add_from_stream( std::istream *istream) {
     T obj;
-    istream >> obj;
-    add(obj);
+    while((*istream) >> obj)
+        //istream >> obj;
+        add(obj);
+
 
 }
 
@@ -133,6 +136,11 @@ size_t Counter<T>::find_max() const {
         }
     }
     return max_index;
+}
+
+template<typename T>
+bool Counter<T>::is_empty() {
+    return counter_vector.empty();
 }
 
 
