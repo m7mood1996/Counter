@@ -13,6 +13,7 @@ template<typename T>
 class Counter {
 
 public:
+    // constructor and destructor
     Counter();
     ~Counter();
 
@@ -22,18 +23,28 @@ public:
     // add new obj with counter 1 to the vector or raising the counter by 1 if it is included
     void add(T obj);
 
-
+    // returns the place of object in the counter vector
     size_t operator[](T& obj) const;
+
+    // returns the most common object in the vector
     T& most_common() const;
+
+    // adding objects from given stream
     void add_from_stream(std::istream *istream);
+
+    // print the counter vector in format of { <obj>: <count> ...} to given output stream
     void print_to_stream(std::ostream& ostream) const;
+    // printing the most common object and it's counter to given output stream
     void print_most_common(std::ostream &ostream) const;
+    // returns if the counter vector is empty or not
     bool is_empty();
 private:
     // template vector of pairs: the first describe the object the second describe the freq
     std::vector<std::pair<T,size_t> > counter_vector;
 
+    // returns the index of the given object in the counter vector
     size_t find_index(T &obj) const;
+    // return the index of the first object which has the max counter
     size_t find_max()const;
 };
 
