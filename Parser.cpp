@@ -24,10 +24,8 @@ void Parser::run() {
     std::string delimiter = " ";
     std::size_t i = 0;
 
-    while(true){
+    while( getline(std::cin,input)){
 
-        std::cout << "[input]\t";
-        getline(std::cin,input);
         while ((pos = input.find(delimiter)) != std::string::npos) {
             tokens.push_back(input.substr(0, pos));
             input.erase(0, pos + delimiter.length());
@@ -36,13 +34,26 @@ void Parser::run() {
         tokens.push_back(input);
 
         if (tokens.at(0) == "string_counter"){
+            if(tokens.size()<2) {
+                std::cerr<<"Error: Missing counter name";
+                exit(-1);
+            }
             add_counter(tokens.at(1), false);
         }
         else if (tokens.at(0) == "int_counter"){
+            if(tokens.size()<2) {
+                std::cerr<<"Error: Missing counter name";
+                exit(-1);
+            }
             add_counter(tokens.at(1), true);
         }
         else if (tokens.at(0) == "add_from_file"){
+            if(tokens.size()<3) {
+                std::cerr<<"Error: Missing file name";
+                exit(-1);
+            }
             add_from_file(tokens.at(1), tokens.at(2).c_str());
+
         }
         else if (tokens.at(0) == "add_from_string"){
             add_from_string(tokens);
@@ -61,11 +72,11 @@ void Parser::run() {
             exit(1);
         }
         else{
-            std::cerr << "Unknown command " << tokens.at(0);
+            std::cerr << "Error: Unknown command this"<<std::endl;
             exit(1);
         }
 
-        std::cout << std::endl;
+
         input = "";
         tokens.clear();
     }
@@ -74,7 +85,7 @@ void Parser::run() {
 
 void Parser::add_counter(const std::string &counter_name, bool type) {
     if(counter_exist(counter_name)){
-        std::cerr << "Counter name already exists";
+        std::cerr <<"Error: Counter name already exists"<<std::endl;
         exit(-1);
     }
     if (type){ // int_counter
@@ -95,12 +106,16 @@ void Parser::add_counter(const std::string &counter_name, bool type) {
 void Parser::add_from_file(const std::string &counter_name, const char *file_name) {
     size_t index = find_counter_by_name(counter_name);
     if(counters[index].first != counter_name){
-        std::cerr << "No counter named " << counter_name;
+        std::cerr <<"No counter named " << counter_name;
         exit(1);
     }
     std::ifstream input_file(file_name);
     if(counters[index].second.second) { // int counter
         std::ifstream inFile(file_name);
+        if(!inFile.is_open()){
+            std::cerr <<"Error: Failed to open file" ;
+            exit(-1);
+        }
         ((Counter<int> *) counters[index].second.first)->add_from_stream(&inFile);
         inFile.close();
 
@@ -109,7 +124,10 @@ void Parser::add_from_file(const std::string &counter_name, const char *file_nam
     else {
         std::ifstream inFile;
         inFile.open(file_name);
-
+        if(!inFile.is_open()){
+            std::cerr <<"Error: Failed to open file" ;
+            exit(-1);
+        }
         ((Counter<std::string> *) counters[index].second.first)->add_from_stream(&input_file);
         inFile.close();
 
@@ -126,15 +144,15 @@ void Parser::add_from_string(std::vector<std::string> &input_string_vector) {
     }
     if(counters[index].second.second) { // int
         Counter<int>* temp_counter = ((Counter<int>*)counters[index].second.first);
+        int x;
         for (size_t i = 2; i < input_string_vector.size(); i++) {
-            try {
-                //ss << input_string_vector[i];
-                temp_counter->add(std::atoi(( input_string_vector[i].c_str())));
+            if (std::sscanf(input_string_vector[i].c_str(), "%d", &x) == 1) {
             }
-            catch (const std::exception &e) {
-                std::cerr << "Read failed" ;
+            else {
+                std::cerr << "ERROR: Read failed" ;
                 exit(-1);
             }
+            temp_counter->add(x);
         }
     }
     else{
@@ -155,32 +173,35 @@ void Parser::add_from_string(std::vector<std::string> &input_string_vector) {
 
 void Parser::stats(const std::string &counter_name) {
     size_t index = find_counter_by_name(counter_name);
-    if(counters[index].first !=counter_name){
+    if (counters[index].first != counter_name) {
         std::cerr << "No counter named " << counter_name;
         exit(1);
     }
-    std::cout << counter_name << " =";
-    if(counters[index].second.second) { // int
+    std::cout << "counter " << counter_name << " =";
+    if (counters[index].second.second) { // int
 
-        ((Counter<int>*)counters[index].second.first)->print_to_stream(std::cout);
-    }
-    else{
-        ((Counter<std::string>*)counters[index].second.first)->print_to_stream(std::cout);
+        ((Counter<int> *) counters[index].second.first)->print_to_stream(std::cout);
+    } else {
+        ((Counter<std::string> *) counters[index].second.first)->print_to_stream(std::cout);
     }
 
-    }
+}
 
 bool Parser::counter_exist(const std::string &counter_name) const {
     if(counters.empty())
         return false;
     size_t i = find_counter_by_name(counter_name);
-    if (counters[i].first == counter_name)
+    if (i < counters.size() && counters[i].first == counter_name)
         return true;
     return false;
 }
 
 size_t Parser::find_counter_by_name(const std::string &counter_name) const {
     size_t i =0;
+    if(counters.empty()){
+        std::cerr<<"Error: No counter named "<<counter_name;
+        exit(-1);
+    }
     for (; i < counters.size();++i){
         if (counters[i].first == counter_name)
             break;
@@ -196,15 +217,15 @@ void Parser::most_common(const std::string &counter_name) {
     }
     if(counters[i].second.second) { // int counter
         if (((Counter<int> *) (counters[i].second.first))->is_empty()) {
-            std::cout << "Counter is empty" << std::endl;
-            return;
+            std::cerr <<"Error: Counter is empty"<<std::endl;
+            exit(1);
         }
         ((Counter<int> *) (counters[i].second.first))->print_most_common(std::cout);
     }
     else {
         if (((Counter<std::string> *) (counters[i].second.first))->is_empty()) {
-            std::cout << "Counter is empty" << std::endl;
-            return;
+            std::cerr <<"Error: Counter is empty"<<std::endl;
+            exit(1);
         }
         ((Counter<std::string> *) (counters[i].second.first))->print_most_common(std::cout);
     }

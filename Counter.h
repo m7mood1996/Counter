@@ -46,16 +46,15 @@ private:
     size_t find_index(T &obj) const;
     // return the index of the first object which has the max counter
     size_t find_max()const;
+    bool is_included(T obj) const;
 };
 
 template<typename T>
 Counter<T>::Counter() {
-
 }
 
 template<typename T>
 Counter<T>::~Counter() {
-
 }
 
 template<typename T>
@@ -71,8 +70,9 @@ void Counter<T>::add(T obj) {
         return;
     }
     size_t index = find_index(obj);
-    if(counter_vector[index].first == obj)
+    if (is_included(obj)){
         ++counter_vector[index].second;
+    }
     else{
         std::pair<T,size_t> newPair(obj,1);
         counter_vector.push_back(newPair);
@@ -98,8 +98,8 @@ size_t Counter<T>::operator[](T &obj) const {
 }
 
 template<typename T>
-T &Counter<T>::most_common() const {
-    // the vector is sorted, so returning the first element hits the max
+T &Counter<T>::most_common() const { // the vector is sorted, so returning the first element hits the max
+
     size_t max_index = find_max();
     return counter_vector[max_index].first;
 }
@@ -107,9 +107,14 @@ T &Counter<T>::most_common() const {
 template<typename T>
 void Counter<T>::add_from_stream( std::istream *istream) {
     T obj;
-    while((*istream) >> obj)
-        //istream >> obj;
+
+    while ((*istream) >> obj) {
+
         add(obj);
+    }
+    if (!(*istream).eof()){
+        std::cerr<<"Error: Read failed";
+        exit(-1);}
 
 
 }
@@ -117,14 +122,14 @@ void Counter<T>::add_from_stream( std::istream *istream) {
 template<typename T>
 void Counter<T>::print_to_stream(std::ostream& ostream) const {
 
-    ostream << "{ " ;
+    ostream << " { " ;
     for (size_t i = 0; i < counter_vector.size();++i){
         ostream << counter_vector[i].first;
         ostream << ':';
         ostream << counter_vector[i].second;
         ostream << ' ';
     }
-    ostream << " }";
+    ostream << "}"<<std::endl;
 }
 
 template<typename T>
@@ -152,6 +157,15 @@ size_t Counter<T>::find_max() const {
 template<typename T>
 bool Counter<T>::is_empty() {
     return counter_vector.empty();
+}
+
+template<typename T>
+bool Counter<T>::is_included(T obj) const {
+    size_t i = 0;
+    for (; i < counter_vector.size(); i++)
+        if(counter_vector[i].first == obj)
+            return true;
+    return false;
 }
 
 
